@@ -1,4 +1,8 @@
 * Hiragana
+:PROPERTIES:
+:RATER: self
+:ALGORITHM: sm2+c
+:END:
 ** あ
 a
 ** い

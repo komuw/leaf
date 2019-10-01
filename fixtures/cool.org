@@ -1,0 +1,17 @@
+* cool
+:PROPERTIES:
+:RATER:      self
+:ALGORITHM:  ebisu
+:PER_REVIEW: 40
+:END:
+** /emphasis/
+/emphasis/
+side2
+
+
+** Code sample
+
+#+BEGIN_SRC javascript
+const foo = "test"
+ass
+#+END_SRC
