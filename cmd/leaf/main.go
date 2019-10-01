@@ -8,8 +8,8 @@ import (
 	"os"
 	"text/tabwriter"
 
-	"github.com/ap4y/leaf"
-	"github.com/ap4y/leaf/ui"
+	"github.com/komuw/leaf"
+	"github.com/komuw/leaf/ui"
 	termbox "github.com/nsf/termbox-go"
 )
 

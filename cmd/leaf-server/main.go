@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ap4y/leaf"
-	"github.com/ap4y/leaf/ui"
+	"github.com/komuw/leaf"
+	"github.com/komuw/leaf/ui"
 )
 
 var (

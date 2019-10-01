@@ -15,13 +15,13 @@ toolchain to compile the app.
 To install or update run:
 
 #+BEGIN_SRC shell
-go get -u github.com/ap4y/leaf/cmd/leaf
+go get -u github.com/komuw/leaf/cmd/leaf
 #+END_SRC
 
 or
 
 #+BEGIN_SRC shell
-go get -u github.com/ap4y/leaf/cmd/leaf-server
+go get -u github.com/komuw/leaf/cmd/leaf-server
 #+END_SRC
 
 Leaf provides 2 different versions:
@@ -76,7 +76,7 @@ Top header level property drawer is used to adjust review
 parameters. Following parameters are supported:
 
 - ~ALGORITHM~ is a spaced repetition algorithm to use. Default is
-  "sm2+c". All possible values can be found [[https://github.com/ap4y/leaf/blob/master/stats.go#L35-L44][here]].
+  "sm2+c". All possible values can be found [[https://github.com/komuw/leaf/blob/master/stats.go#L35-L44][here]].
 - ~RATER~ defines which rating system will be used for
   reviews. Defaults to ~auto~, supported values: ~auto~ and ~self~.
 - ~PER_REVIEW~ is a maximum amount of cards per review.
@@ -96,7 +96,7 @@ to define new ones. Following algorithms are supported as of now:
 - [[https://fasiha.github.io/ebisu.js/][ebisu]]
 
 You can find calculated intervals in corresponding test files. Check
-[[https://github.com/ap4y/leaf/blob/master/stats.go#L9-19][SRSAlgorithm]] interface to define a new algorithm or curve.
+[[https://github.com/komuw/leaf/blob/master/stats.go#L9-19][SRSAlgorithm]] interface to define a new algorithm or curve.
 
 Please keep in mind that algorithm variables may not be compatible
 with each other and algorithm switching is not supported.
@@ -108,8 +108,8 @@ will mark review as successful. You can use 2 different types of
 rating systems:
 
 - ~auto~ (default) is based on amount of mistakes made during review. For ~auto~
-  rating is assigned using [[https://github.com/ap4y/leaf/blob/master/rating.go#L35-L37][HarshRater]] which implements steep curve and
-  a single mistake will have score less than ~0.6~. Check [[https://github.com/ap4y/leaf/blob/master/rating.go#L24-L26][Rater]]
+  rating is assigned using [[https://github.com/komuw/leaf/blob/master/rating.go#L35-L37][HarshRater]] which implements steep curve and
+  a single mistake will have score less than ~0.6~. Check [[https://github.com/komuw/leaf/blob/master/rating.go#L24-L26][Rater]]
   interface to get understanding how to define a different rater
   curve.
 
