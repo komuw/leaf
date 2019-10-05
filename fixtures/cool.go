@@ -89,10 +89,10 @@ func (sm Supermemo2) Advance(rating float64) SRSalgorithm {
 
 // Card represents a single card in a Deck.
 type Card struct {
-	Question     string
-	FileContents []byte
-	FilePath     string
-	Algorithm    SRSalgorithm
+	Question string
+	// FileContents []byte
+	FilePath  string
+	Algorithm SRSalgorithm
 }
 
 func main() {
@@ -133,10 +133,9 @@ func main() {
 		cardAlgo = alg
 	}
 	card := Card{
-		FileContents: md,
-		FilePath:     filepath,
-		Algorithm:    cardAlgo,
-		Question:     question,
+		FilePath:  filepath,
+		Algorithm: cardAlgo,
+		Question:  question,
 	}
 
 	fmt.Println("NextReviewAt() 1: ", card.Algorithm.NextReviewAt())
