@@ -98,39 +98,59 @@ type Card struct {
 }
 
 // MarshalJSON implements json.Marshaler for Supermemo2
-func (c *Card) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Version  uint32
-		Question string
-		// FileContents []byte
-		FilePath  string
-		Algorithm SRSalgorithm
-	}{c.Version, c.Question, c.FilePath, c.Algorithm})
-}
+// func (c *Card) MarshalJSON() ([]byte, error) {
+// 	return json.Marshal(&struct {
+// 		Version  uint32
+// 		Question string
+// 		// FileContents []byte
+// 		FilePath  string
+// 		Algorithm SRSalgorithm
+// 	}{c.Version, c.Question, c.FilePath, c.Algorithm})
+// }
 
 // UnmarshalJSON implements json.Unmarshaler for Supermemo2
 func (c *Card) UnmarshalJSON(b []byte) error {
-	payload := &struct {
-		Version  uint32
-		Question string
-		// FileContents []byte
-		FilePath  string
-		Algorithm SRSalgorithm
-	}{}
+	//var payload Card
 
-	if err := json.Unmarshal(b, payload); err != nil {
-		return errors.Wrapf(err, "unable to Unmarshal payload: %v", payload)
+	var objMap map[string]interface{}
+	err := json.Unmarshal(b, &objMap)
+	if err != nil {
+		return errors.Wrapf(err, "unable to Unmarshal")
 	}
 
-	c.Version = payload.Version
-	c.Question = payload.Question
-	c.FilePath = payload.FilePath
-	c.Algorithm = payload.Algorithm
+	c.Version = uint32(objMap["Version"].(float64))
+	c.Question = objMap["Question"].(string)
+	c.FilePath = objMap["FilePath"].(string)
+
+	var objMapAlgo = objMap["Algorithm"].(map[string]interface{})
+	myAlg := NewSupermemo2()
+	myAlg.Interval = objMapAlgo["Interval"].(float64)
+	myAlg.Easiness = objMapAlgo["Easiness"].(float64)
+	myAlg.Correct = int(objMapAlgo["Correct"].(float64))
+	myAlg.Total = int(objMapAlgo["Total"].(float64))
+	LastReviewedAtLayout := "2006-01-02T15:04:05Z07:00"
+	ReviewedAt, err := time.Parse(LastReviewedAtLayout, objMapAlgo["LastReviewedAt"].(string))
+	if err != nil {
+		return errors.Wrapf(err, "unable to Parse LastReviewedAt")
+	}
+	myAlg.LastReviewedAt = ReviewedAt
+
+	c.Algorithm = myAlg
+
+	fmt.Println("card11:")
+	litter.Dump(c)
+
+	fmt.Println("payload:")
+	litter.Dump(c)
+
+	fmt.Println("card:")
+	litter.Dump(c)
+
 	return nil
 }
 
 func main() {
-	filepath := "/home/komuw/mystuff/leaf/fixtures/ala.md"
+	filepath := "/home/komuw/mystuff/leaf/fixtures/akk.md"
 	md, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		log.Fatalf("error: %+v", err)
@@ -173,6 +193,8 @@ func main() {
 		card = crd
 	}
 
+	fmt.Println("card before death")
+	litter.Dump(card)
 	fmt.Println("NextReviewAt() 1: ", card.Algorithm.NextReviewAt())
 	// review and rate a card
 	sm := card.Algorithm.Advance(0.8)
