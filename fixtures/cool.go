@@ -11,7 +11,6 @@ import (
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/parser"
-	"github.com/sanity-io/litter"
 
 	"github.com/pkg/xattr"
 )
@@ -31,6 +30,8 @@ type SRSalgorithm interface {
 	MarshalJSON() ([]byte, error)
 	UnmarshalJSON(b []byte) error
 }
+
+const attrName = "user.algo" // has to start with "user."
 
 ////////////////////////////////////////////// SUPERMEMO //////////////////////////////////////////////
 // Supermemo2 calculates review intervals using SM2 algorithm
@@ -130,61 +131,59 @@ type Card struct {
 }
 
 func main() {
-	filepath := "/home/komuw/mystuff/leaf/fixtures/cool.md"
+	filepath := "/home/komuw/mystuff/leaf/fixtures/ala.md"
 	md, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		log.Fatal("error: ", err)
 	}
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 	parser := parser.NewWithExtensions(extensions)
-
 	mainNode := parser.Parse(md)
-
 	question, err := getQuestion(mainNode)
 	if err != nil {
 		log.Fatal("error: ", err)
 	}
+	cardAttribute, err := getExtendedAttrs(filepath)
+	if err != nil {
+		log.Fatal("error: ", err)
 
+	}
+
+	// if cardAttribute exists, then this is not a new card and we should
+	// bootstrap the Algorithm to use from the cardAttribute
+	// else, create a card with a new Algorithm
+	cardAlgo := NewSupermemo2()
+	if len(cardAttribute) > 0 {
+		alg := NewSupermemo2()
+		err = json.Unmarshal(cardAttribute, &alg)
+		if err != nil {
+			log.Fatal("error: ", err)
+		}
+		cardAlgo = alg
+	}
 	card := Card{
 		FileContents: md,
 		FilePath:     filepath,
-		Algorithm:    NewSupermemo2(),
+		Algorithm:    cardAlgo,
 		Question:     question,
 	}
 
-	fmt.Println("card")
-	// // litter.Dump(card)
-
 	fmt.Println("NextReviewAt() 1: ", card.Algorithm.NextReviewAt())
-	// litter.Dump(card)
-
 	// review and rate a card
 	sm := card.Algorithm.Advance(0.8)
 	card.Algorithm = sm
 	fmt.Println("NextReviewAt() 2: ", card.Algorithm.NextReviewAt())
-	// litter.Dump(card)
 
+	// update the card attributes with new algo
 	algoJson, err := json.Marshal(card.Algorithm)
 	if err != nil {
 		log.Fatal("error: ", err)
 	}
-	fmt.Println("algoJson: ", algoJson)
-
 	err = setExtendedAttrs(filepath, algoJson)
 	if err != nil {
 		log.Fatal("error: ", err)
 
 	}
-
-	th := card.Algorithm.(Supermemo2)
-	err = json.Unmarshal(algoJson, &th)
-	if err != nil {
-		log.Fatal("error: ", err)
-	}
-	fmt.Println("theRealAlgo")
-	litter.Dump(th)
-
-	fmt.Println("th NextReviewAt() 2: ", th.NextReviewAt())
 
 }
 
@@ -202,10 +201,18 @@ func getQuestion(node ast.Node) (string, error) {
 }
 
 func setExtendedAttrs(filepath string, algoJson []byte) error {
-	const attrName = "user.algo" // has to start with "user."
 	err := xattr.Set(filepath, attrName, algoJson)
 	if err != nil {
 		return fmt.Errorf("unable to set extended file attributes: %w", err)
 	}
 	return nil
+}
+
+func getExtendedAttrs(filepath string) ([]byte, error) {
+	attribute, err := xattr.Get(filepath, attrName)
+	if len(attribute) > 0 && err != nil {
+		return []byte(""), fmt.Errorf("unable to get extended file attributes: %w", err)
+
+	}
+	return attribute, nil
 }
