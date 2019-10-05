@@ -136,21 +136,11 @@ func (c *Card) UnmarshalJSON(b []byte) error {
 	myAlg.LastReviewedAt = ReviewedAt
 
 	c.Algorithm = myAlg
-
-	fmt.Println("card11:")
-	litter.Dump(c)
-
-	fmt.Println("payload:")
-	litter.Dump(c)
-
-	fmt.Println("card:")
-	litter.Dump(c)
-
 	return nil
 }
 
 func main() {
-	filepath := "/home/komuw/mystuff/leaf/fixtures/akk.md"
+	filepath := "/home/komuw/mystuff/leaf/fixtures/pol.md"
 	md, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		log.Fatalf("error: %+v", err)
@@ -193,8 +183,6 @@ func main() {
 		card = crd
 	}
 
-	fmt.Println("card before death")
-	litter.Dump(card)
 	fmt.Println("NextReviewAt() 1: ", card.Algorithm.NextReviewAt())
 	// review and rate a card
 	sm := card.Algorithm.Advance(0.8)
