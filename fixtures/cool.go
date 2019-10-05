@@ -96,7 +96,7 @@ type Card struct {
 }
 
 func main() {
-	filepath := "/home/komuw/mystuff/leaf/fixtures/ala.md"
+	filepath := "/home/komuw/mystuff/leaf/fixtures/cool.md"
 	md, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		log.Fatal("error: ", err)

@@ -1,10 +1,4 @@
 
-<div>
-rater: self  
-algorithm: sm2+c  
-nextreview: sometime   
-</div>
-
 this is the question
 ----
 
