@@ -2,7 +2,7 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
+
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -13,6 +13,7 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 	"github.com/sanity-io/litter"
 
+	"github.com/pkg/errors"
 	"github.com/pkg/xattr"
 )
 
@@ -89,28 +90,61 @@ func (sm Supermemo2) Advance(rating float64) SRSalgorithm {
 
 // Card represents a single card in a Deck.
 type Card struct {
+	Version  uint32
 	Question string
 	// FileContents []byte
 	FilePath  string
 	Algorithm SRSalgorithm
 }
 
+// MarshalJSON implements json.Marshaler for Supermemo2
+func (c *Card) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Version  uint32
+		Question string
+		// FileContents []byte
+		FilePath  string
+		Algorithm SRSalgorithm
+	}{c.Version, c.Question, c.FilePath, c.Algorithm})
+}
+
+// UnmarshalJSON implements json.Unmarshaler for Supermemo2
+func (c *Card) UnmarshalJSON(b []byte) error {
+	payload := &struct {
+		Version  uint32
+		Question string
+		// FileContents []byte
+		FilePath  string
+		Algorithm SRSalgorithm
+	}{}
+
+	if err := json.Unmarshal(b, payload); err != nil {
+		return errors.Wrapf(err, "unable to Unmarshal payload: %v", payload)
+	}
+
+	c.Version = payload.Version
+	c.Question = payload.Question
+	c.FilePath = payload.FilePath
+	c.Algorithm = payload.Algorithm
+	return nil
+}
+
 func main() {
-	filepath := "/home/komuw/mystuff/leaf/fixtures/cool.md"
+	filepath := "/home/komuw/mystuff/leaf/fixtures/ala.md"
 	md, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		log.Fatal("error: ", err)
+		log.Fatalf("error: %+v", err)
 	}
 	extensions := parser.CommonExtensions | parser.AutoHeadingIDs
 	parser := parser.NewWithExtensions(extensions)
 	mainNode := parser.Parse(md)
 	question, err := getQuestion(mainNode)
 	if err != nil {
-		log.Fatal("error: ", err)
+		log.Fatalf("error: %+v", err)
 	}
 	cardAttribute, err := getExtendedAttrs(filepath)
 	if err != nil {
-		log.Fatal("error: ", err)
+		log.Fatalf("error: %+v", err)
 
 	}
 	fmt.Println("cardAttribute:")
@@ -119,23 +153,24 @@ func main() {
 	// if cardAttribute exists, then this is not a new card and we should
 	// bootstrap the Algorithm to use from the cardAttribute
 	// else, create a card with a new Algorithm
-	cardAlgo := NewSupermemo2()
+	card := Card{
+		Version:   1,
+		Question:  question,
+		FilePath:  filepath,
+		Algorithm: NewSupermemo2(),
+	}
 	if len(cardAttribute) > 0 {
-		var alg Supermemo2
-		err = json.Unmarshal(cardAttribute, &alg)
+		var crd Card
+
+		err = json.Unmarshal(cardAttribute, &crd)
 		if err != nil {
-			log.Fatal("error: ", err)
+			log.Fatalf("error: %+v", err)
 		}
 
-		fmt.Println("algo from file")
-		litter.Dump(alg)
+		fmt.Println("card from file")
+		litter.Dump(crd)
 
-		cardAlgo = alg
-	}
-	card := Card{
-		FilePath:  filepath,
-		Algorithm: cardAlgo,
-		Question:  question,
+		card = crd
 	}
 
 	fmt.Println("NextReviewAt() 1: ", card.Algorithm.NextReviewAt())
@@ -145,18 +180,18 @@ func main() {
 	fmt.Println("NextReviewAt() 2: ", card.Algorithm.NextReviewAt())
 
 	// update the card attributes with new algo
-	algoJson, err := json.Marshal(card.Algorithm)
+	algoJson, err := json.Marshal(card)
 	if err != nil {
-		log.Fatal("error: ", err)
+		log.Fatalf("error: %+v", err)
 	}
 	err = setExtendedAttrs(filepath, algoJson)
 	if err != nil {
-		log.Fatal("error: ", err)
+		log.Fatalf("error: %+v", err)
 
 	}
 
-	fmt.Println("algo when saving")
-	litter.Dump(card.Algorithm)
+	fmt.Println("card when saving")
+	litter.Dump(card)
 
 }
 
@@ -176,7 +211,7 @@ func getQuestion(node ast.Node) (string, error) {
 func setExtendedAttrs(filepath string, algoJson []byte) error {
 	err := xattr.Set(filepath, attrName, algoJson)
 	if err != nil {
-		return fmt.Errorf("unable to set extended file attributes: %w", err)
+		return errors.Wrapf(err, "unable to set extended file attributes")
 	}
 	return nil
 }
@@ -184,8 +219,7 @@ func setExtendedAttrs(filepath string, algoJson []byte) error {
 func getExtendedAttrs(filepath string) ([]byte, error) {
 	attribute, err := xattr.Get(filepath, attrName)
 	if len(attribute) > 0 && err != nil {
-		return []byte(""), fmt.Errorf("unable to get extended file attributes: %w", err)
-
+		return []byte(""), errors.Wrapf(err, "unable to get extended file attributes")
 	}
 	return attribute, nil
 }
