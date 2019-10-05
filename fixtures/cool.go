@@ -11,6 +11,7 @@ import (
 
 	"github.com/gomarkdown/markdown/ast"
 	"github.com/gomarkdown/markdown/parser"
+	"github.com/sanity-io/litter"
 
 	"github.com/pkg/xattr"
 )
@@ -26,9 +27,6 @@ type Deck struct {
 type SRSalgorithm interface {
 	NextReviewAt() time.Time
 	Advance(rating float64) SRSalgorithm
-
-	MarshalJSON() ([]byte, error)
-	UnmarshalJSON(b []byte) error
 }
 
 const attrName = "user.algo" // has to start with "user."
@@ -87,39 +85,6 @@ func (sm Supermemo2) Advance(rating float64) SRSalgorithm {
 	return newSm
 }
 
-// MarshalJSON implements json.Marshaler for Supermemo2
-func (sm Supermemo2) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		LastReviewedAt time.Time
-		Interval       float64
-		Easiness       float64
-		Correct        int
-		Total          int
-	}{sm.LastReviewedAt, sm.Interval, sm.Easiness, sm.Correct, sm.Total})
-}
-
-// UnmarshalJSON implements json.Unmarshaler for Supermemo2
-func (sm Supermemo2) UnmarshalJSON(b []byte) error {
-	payload := &struct {
-		LastReviewedAt time.Time
-		Interval       float64
-		Easiness       float64
-		Correct        int
-		Total          int
-	}{}
-
-	if err := json.Unmarshal(b, payload); err != nil {
-		return err
-	}
-
-	sm.LastReviewedAt = payload.LastReviewedAt
-	sm.Easiness = payload.Easiness
-	sm.Interval = payload.Interval
-	sm.Correct = payload.Correct
-	sm.Total = payload.Total
-	return nil
-}
-
 ////////////////////////////////////////////// SUPERMEMO //////////////////////////////////////////////
 
 // Card represents a single card in a Deck.
@@ -148,17 +113,23 @@ func main() {
 		log.Fatal("error: ", err)
 
 	}
+	fmt.Println("cardAttribute:")
+	litter.Dump(string(cardAttribute))
 
 	// if cardAttribute exists, then this is not a new card and we should
 	// bootstrap the Algorithm to use from the cardAttribute
 	// else, create a card with a new Algorithm
 	cardAlgo := NewSupermemo2()
 	if len(cardAttribute) > 0 {
-		alg := NewSupermemo2()
+		var alg Supermemo2
 		err = json.Unmarshal(cardAttribute, &alg)
 		if err != nil {
 			log.Fatal("error: ", err)
 		}
+
+		fmt.Println("algo from file")
+		litter.Dump(alg)
+
 		cardAlgo = alg
 	}
 	card := Card{
@@ -184,6 +155,9 @@ func main() {
 		log.Fatal("error: ", err)
 
 	}
+
+	fmt.Println("algo when saving")
+	litter.Dump(card.Algorithm)
 
 }
 
